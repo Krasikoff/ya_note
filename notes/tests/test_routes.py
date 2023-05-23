@@ -1,3 +1,7 @@
+#При попытке перейти на страницу списка заметок, страницу успешного добавления записи, 
+#страницу добавления заметки, отдельной заметки, редактирования или удаления 
+#заметки анонимный пользователь перенаправляется на страницу логина.
+
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
@@ -9,7 +13,6 @@ from notes.models import  Note
 
 # Получаем модель пользователя.
 User = get_user_model()
-
 
 
 class TestRoutes(TestCase):
@@ -27,7 +30,8 @@ class TestRoutes(TestCase):
             author=cls.author,
             )        
 
-
+##Главная страница доступна анонимному пользователю.
+##Страницы регистрации пользователей, входа в учётную запись и выхода из неё доступны всем пользователям.
     def test_pages_availability(self):
         urls = (
             ('notes:home', None),
@@ -41,12 +45,11 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-
+#Страницы отдельной заметки, удаления и редактирования заметки доступны
+#только автору заметки. Если на эти страницы попытается зайти другой пользователь —
+# вернётся ошибка 404.
     def test_availability_for_note_edit_and_delete(self):
         urls = (
-#           ('notes:list'),
-#            ('notes:success'),
-#            ('notes:add'),
             ('notes:detail'),
             ('notes:edit'),
             ('notes:delete'),
@@ -67,6 +70,8 @@ class TestRoutes(TestCase):
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, status)
 
+#Аутентифицированному пользователю доступна страница со списком заметок notes/, 
+#страница успешного добавления заметки done/, страница добавления новой заметки add/.
     def test_availability_for_add_success_list_note(self):
         urls = (
             ('notes:list'),
@@ -89,20 +94,25 @@ class TestRoutes(TestCase):
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, status)
 
-
+#При попытке перейти на страницу списка заметок, страницу успешного добавления записи, 
+#страницу добавления заметки, отдельной заметки, редактирования или удаления 
+#заметки анонимный пользователь перенаправляется на страницу логина.
     def test_redirect_for_anonymous_client(self):
         urls = (
-            ('notes:detail'),
-            ('notes:edit'),
-            ('notes:delete'),
+            ('notes:list',None),
+            ('notes:success',None),
+            ('notes:delete',(self.note.slug,)),
+            ('notes:add',None),
+            ('notes:detail',(self.note.slug,)),
+            ('notes:edit', (self.note.slug,) ),
         )
         # Сохраняем адрес страницы логина:
         login_url = reverse('users:login')
         # В цикле перебираем имена страниц, с которых ожидаем редирект:
-        for name in urls:
+        for name, args in urls:
             with self.subTest(name=name):
                 # Получаем адрес страницы редактирования или удаления комментария:
-                url = reverse(name, args=(self.note.slug,))
+                url = reverse(name, args=args)
                 # Получаем ожидаемый адрес страницы логина, 
                 # на который будет перенаправлен пользователь.
                 # Учитываем, что в адресе будет параметр next, в котором передаётся
