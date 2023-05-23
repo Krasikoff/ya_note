@@ -92,9 +92,6 @@ class TestRoutes(TestCase):
 
     def test_redirect_for_anonymous_client(self):
         urls = (
-#            ('notes:list', None),
-#            ('notes:success', None),
-#            ('notes:add',None),
             ('notes:detail'),
             ('notes:edit'),
             ('notes:delete'),
