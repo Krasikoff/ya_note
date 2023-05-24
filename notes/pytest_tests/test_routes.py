@@ -1,4 +1,5 @@
 # test_routes.py
+from pytest_django.asserts import assertRedirects
 from http import HTTPStatus
 import pytest
 from django.urls import reverse
@@ -36,4 +37,23 @@ def test_pages_availability_for_author(parametrized_client, name, note, expected
     assert response.status_code == expected_status
 
 #При попытке перейти на страницу списка заметок, страницу успешного добавления записи, страницу добавления заметки, отдельной заметки, редактирования или удаления заметки анонимный пользователь перенаправляется на страницу логина.
+@pytest.mark.parametrize(
+    'name, args',
+    (
+        ('notes:detail', pytest.lazy_fixture('slug_for_args')),
+        ('notes:edit', pytest.lazy_fixture('slug_for_args')),
+        ('notes:delete', pytest.lazy_fixture('slug_for_args')),
+        ('notes:add', None),
+        ('notes:success', None),
+        ('notes:list', None),
+    ),
+)
+# Передаём в тест анонимный клиент, name проверяемых страниц и args:
+def test_redirects(client, name, args):
+    login_url = reverse('users:login')
+    # Теперь не надо писать никаких if и можно обойтись одним выражением.
+    url = reverse(name, args=args)
+    expected_url = f'{login_url}?next={url}'
+    response = client.get(url)
+    assertRedirects(response, expected_url)
 #Страницы регистрации пользователей, входа в учётную запись и выхода из неё доступны всем пользователям.

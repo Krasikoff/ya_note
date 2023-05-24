@@ -37,6 +37,8 @@ class TestRoutes(TestCase):
             )        
         cls.list_url= reverse('notes:list', )
         cls.detail_url = reverse('notes:detail', args=(cls.note.slug,))
+        cls.add_url = reverse('notes:add', )
+        cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))        
         print(cls.detail_url)
 
 
@@ -58,7 +60,13 @@ class TestRoutes(TestCase):
 #        pdb.set_trace()
 #на страницы создания и редактирования заметки передаются формы.
     def test_authorized_client_has_form(self):
+        urls = (
+            self.edit_url,
+            self.add_url
+        )
         # Авторизуем клиент при помощи ранее созданного пользователя.
         self.client.force_login(self.reader)
-        response = self.client.get(self.detail_url)
-        self.assertIn('form', response.context)  
+        for url in urls:
+            with self.subTest(url = url):
+                response = self.client.get(url)
+                self.assertIn('form', response.context)  
